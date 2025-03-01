@@ -1,0 +1,176 @@
+@startuml "C4 model - Context"
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+LAYOUT_WITH_LEGEND()
+LAYOUT_TOP_DOWN()
+
+Person(user, "User", "A user of the system")
+Person(admin_system, "Admin System", "A system administrator")
+Person(admin_company, "Admin Company", "A company administrator")
+System(blue_whale_platform, "Blue Whale platform", "The Blue Whale Platform", $link="C4 model - Container")
+System_Ext(idp_ext, "IDP System", "The Identity Provider of Company")
+System_Ext(smtp_ext, "SMTP System", "The SMTP of Company")
+
+Rel_Down(user, blue_whale_platform, "Uses", #blue)
+Rel_Down(admin_system, blue_whale_platform, "Uses", #green)
+Rel_Down(admin_company, blue_whale_platform, "Uses", #red)
+Rel_Left(idp_ext, blue_whale_platform, "Can be configured to use", #orange)
+Rel_Right(smtp_ext, blue_whale_platform, "Can be configured to use", #purple)
+
+@enduml
+
+@startuml "C4 model - Container"
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam defaultTextAlignment center
+skinparam shadowing false
+skinparam databaseStyle cylinder
+
+LAYOUT_WITH_LEGEND()
+LAYOUT_TOP_DOWN()
+
+System_Boundary(blue_whale_platform, "Blue Whale platform", $link="C4 model - Context") {
+    Container(web_app, "Web Application", "JavaScript/React", "Allows users to interact with the system")
+    Container(mobile_app_ios, "iOS Mobile App", "Swift", "Allows users to interact with the system via iOS devices")
+    Container(mobile_app_android, "Android Mobile App", "Kotlin", "Allows users to interact with the system via Android devices")
+    Container(api_gateway, "API Gateway", "Go", "Handles API requests and routes them to appropriate services")
+    Container(idp, "Identity Provider (IdP)", "Go", "Handles authentication for the system")
+    Container(tenant_service, "Tenant Service", "Go", "Manages tenant data")
+    Container(monitoring, "Monitoring System", "Customizable Monitoring", "Monitors system performance and health")
+    Container(notification_service, "Notification Service", "Go/RabbitMQ", "Handles notifications and messaging using pub/sub pattern")
+    ContainerQueue(rabbitmq, "RabbitMQ", "Message Broker", "Manages messaging and event distribution using Pub/Sub model")
+    ContainerDb(database, "Database", "PostgreSQL", "Stores user data")
+}
+System_Ext(idp_ext, "IDP System", "External IDP", "The Identity Provider of Company")
+System_Ext(smtp_ext, "SMTP System", "External SMTP", "The SMTP of Company")
+
+Rel(user, web_app, "Uses")
+Rel(user, mobile_app_ios, "Uses")
+Rel(user, mobile_app_android, "Uses")
+Rel(web_app, api_gateway, "Makes API calls to")
+Rel(mobile_app_ios, api_gateway, "Makes API calls to")
+Rel(mobile_app_android, api_gateway, "Makes API calls to")
+
+Rel_Down(api_gateway, idp, "Routes authentication requests to", "RESTful API")
+Rel(api_gateway, tenant_service, "Routes tenant requests to", "gRPC")
+Rel(api_gateway, rabbitmq, "Publishes events to", "RabbitMQ - Pub/Sub")
+
+Rel_Right(idp, tenant_service, "Routes tenant requests to", "gRPC")
+Rel_Down(idp, rabbitmq, "Publishes events to", "RabbitMQ - Pub/Sub")
+Rel(idp, database, "Reads from and writes to", "sql")
+Rel_Left(idp, idp_ext, "Federates authentication with", "OAuth 2.0 / OpenID Connect")
+
+Rel(tenant_service, rabbitmq, "Publishes events to", "RabbitMQ - Pub/Sub")
+Rel(tenant_service, database, "Reads from and writes to", "sql")
+
+Rel_Down(monitoring, database, "Reads from and writes to", "sql")
+
+Rel(notification_service, database, "Reads from and writes to", "sql")
+Rel_Left(notification_service, smtp_ext, "Sends email notifications via", "SMTP")
+
+Rel(rabbitmq, notification_service, "Distributes messages to", "RabbitMQ - Pub/Sub")
+Rel(rabbitmq, monitoring, "Distributes messages to", "RabbitMQ - Pub/Sub")
+
+@enduml
+
+@startuml "C4 model - Component for Tenant Service"
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+LAYOUT_WITH_LEGEND()
+
+Container_Boundary(tenant_service, "Tenant Service") {
+    Component(domain, "Domain", "Go", "Contains business entities and logic related to tenant management")
+    Component(use_cases, "Use Cases", "Go", "Orchestrates business logic for tenant management")
+    
+    Component(inbound_ports, "Inbound Ports", "Go", "Defines how use cases can be invoked")
+    Component(outbound_ports, "Outbound Ports", "Go", "Defines how business logic interacts with external systems")
+    
+    Component(inbound_adapter_rest, "REST Controller", "Go", "Handles REST API requests for tenant management") <<Adapter>>
+    Component(outbound_adapter_db, "Database Repository", "Go", "Interacts with the database for tenant data") <<Adapter>>
+    Component(outbound_adapter_rabbitmq, "RabbitMQ Publisher", "Go", "Publishes events to RabbitMQ") <<Adapter>>
+}
+
+Rel(inbound_adapter_rest, inbound_ports, "Invokes")
+Rel(inbound_ports, use_cases, "Uses")
+Rel(use_cases, domain, "Uses")
+Rel(use_cases, outbound_ports, "Uses")
+Rel(outbound_ports, outbound_adapter_db, "Interacts with")
+Rel(outbound_ports, outbound_adapter_rabbitmq, "Interacts with")
+
+@enduml
+
+@startuml "C4 model - Component for Notification Service"
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+LAYOUT_WITH_LEGEND()
+
+Container_Boundary(notification_service, "Notification Service") {
+    Component(domain, "Domain", "Go", "Contains business entities and logic related to notifications")
+    Component(use_cases, "Use Cases", "Go", "Orchestrates business logic for notifications")
+    
+    Component(inbound_ports, "Inbound Ports", "Go", "Defines how use cases can be invoked")
+    Component(outbound_ports, "Outbound Ports", "Go", "Defines how business logic interacts with external systems")
+    
+    Component(inbound_adapter_rest, "REST Controller", "Go", "Handles REST API requests for notifications") <<Adapter>>
+    Component(outbound_adapter_db, "Database Repository", "Go", "Interacts with the database for notification data") <<Adapter>>
+    Component(outbound_adapter_smtp, "SMTP Service", "Go", "Sends email notifications via SMTP") <<Adapter>>
+    Component(outbound_adapter_rabbitmq, "RabbitMQ Subscriber", "Go", "Receives messages from RabbitMQ") <<Adapter>>
+}
+
+Rel(inbound_adapter_rest, inbound_ports, "Invokes")
+Rel(inbound_ports, use_cases, "Uses")
+Rel(use_cases, domain, "Uses")
+Rel(use_cases, outbound_ports, "Uses")
+Rel(outbound_ports, outbound_adapter_db, "Interacts with")
+Rel(outbound_ports, outbound_adapter_smtp, "Interacts with")
+Rel(outbound_ports, outbound_adapter_rabbitmq, "Interacts with")
+
+@enduml
+
+@startuml "C4 model - Component for Monitoring Service"
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam defaultTextAlignment center
+skinparam shadowing false
+
+LAYOUT_WITH_LEGEND()
+
+Container_Boundary(monitoring, "Monitoring Service") {
+    Component(domain, "Domain", "Go", "Contains business entities and logic related to monitoring")
+    Component(use_cases, "Use Cases", "Go", "Orchestrates business logic for monitoring")
+    
+    Component(inbound_ports, "Inbound Ports", "Go", "Defines how use cases can be invoked")
+    Component(outbound_ports, "Outbound Ports", "Go", "Defines how business logic interacts with external systems")
+    
+    Component(inbound_adapter_rest, "REST Controller", "Go", "Handles REST API requests for monitoring") <<Adapter>>
+    Component(outbound_adapter_db, "Database Repository", "Go", "Interacts with the database for monitoring data") <<Adapter>>
+    Component(outbound_adapter_rabbitmq, "RabbitMQ Subscriber", "Go", "Receives messages from RabbitMQ") <<Adapter>>
+}
+
+Rel(inbound_adapter_rest, inbound_ports, "Invokes")
+Rel(inbound_ports, use_cases, "Uses")
+Rel(use_cases, domain, "Uses")
+Rel(use_cases, outbound_ports, "Uses")
+Rel(outbound_ports, outbound_adapter_db, "Interacts with")
+Rel(outbound_ports, outbound_adapter_rabbitmq, "Interacts with")
+
+@enduml
