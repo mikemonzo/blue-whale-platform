@@ -1,14 +1,12 @@
-// main.go (Orquestador)
 package main
 
 import (
 	"fmt"
 	"log"
 
-	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/pkg/config"
-
 	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/internal/infrastructure/db"
 	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/internal/infrastructure/http/server"
+	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/pkg/config"
 )
 
 func main() {
@@ -17,11 +15,18 @@ func main() {
 	// Configure DB connection
 	dbConn, err := db.NewDBConnection(cfg)
 	if err != nil {
-		log.Fatalf("Failed to connect to DB: %v", err)
+		log.Fatalf("Error opening DB connection: %v", err)
 	}
 	defer dbConn.Close()
 
-	userRepo := db.NewPostgresUserRepository(dbConn)
+	// Initialize repositories
+	userRepo := db.NewPostgresUserRepository(dbConn, cfg)
+
+	// Run migrations
+	migrationsPath := "internal/infrastructure/db/migrations"
+	if err := userRepo.RunMigrations(migrationsPath); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
 
 	fmt.Println("Starting Identity Provider service...")
 

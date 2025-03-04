@@ -3,32 +3,63 @@ package db
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"fmt"
+	"log"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/google/uuid"
 	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/internal/domain/models"
 	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/internal/domain/repositories"
+	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/pkg/config"
 )
 
 type PostgresUserRepository struct {
-	db *sql.DB
+	db     *sql.DB
+	config config.Config
 }
 
-func NewPostgresUserRepository(db *sql.DB) repositories.UserRepository {
-	return &PostgresUserRepository{db: db}
+func NewPostgresUserRepository(db *sql.DB, cfg config.Config) repositories.UserRepository {
+	return &PostgresUserRepository{db: db, config: cfg}
+}
+
+func (r *PostgresUserRepository) RunMigrations(migrationsPath string) error {
+	m, err := migrate.New(
+		fmt.Sprintf("file://%s", migrationsPath),
+		fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+			r.config.DbUser, r.config.DbPassword, r.config.DbHost, r.config.DbPort, r.config.DbName))
+	if err != nil {
+		return fmt.Errorf("failed to create migrate instance: %v", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("failed to run migrations: %v", err)
+	}
+
+	log.Println("Migrations ran successfully")
+	return nil
 }
 
 func (r *PostgresUserRepository) CreateUser(ctx context.Context, user *models.User) error {
 	query := `INSERT INTO users (id, email, username, first_name, last_name, password, status, created_at, updated_at)
               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
+	if user.ID == "" {
+		user.ID = uuid.New().String()
+	}
+
+	fmt.Println("CreateUserDB > user: ", user)
+
 	_, err := r.db.ExecContext(ctx, query, user.ID, user.Email, user.Username, user.FirstName, user.LastName, user.Password, user.Status, user.CreatedAt, user.UpdatedAt)
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("CreateUserDB > user created")
 	return nil
 }
 
+/*
 func (r *PostgresUserRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	query := `SELECT id, email, username, first_name, last_name, password, status, created_at, updated_at FROM users WHERE email = $1`
 
@@ -54,3 +85,4 @@ func (r *PostgresUserRepository) Update(ctx context.Context, user *models.User) 
 
 	return nil
 }
+*/

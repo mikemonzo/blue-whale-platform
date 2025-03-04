@@ -17,11 +17,11 @@ func SetupRoutes(router *gin.Engine, userRepo repositories.UserRepository) {
 		//v1.POST("/refresh", handlers.RefreshTokenHandler)
 		//v1.GET("/userinfo", handlers.UserInfoHandler)
 	}
-	user := v1.Group("/user")
+	users := v1.Group("/users")
 	{
-		user.POST("/create", handlers.CreateUserHandler(userRepo))
+		users.POST("", handlers.CreateUserHandler(userRepo))
+		//users.GET("/:id", handlers.GetUserHandler(userRepo))
 		//user.POST("/update", handlers.UpdateUserHandler)
-		//user.GET("/get", handlers.GetUserHandler)
 		//user.GET("/list", handlers.ListUsersHandler)
 		//user.POST("/delete", handlers.DeleteUserHandler)
 	}

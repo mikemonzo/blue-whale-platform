@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,11 +21,12 @@ type CreateUserRequest struct {
 func CreateUserHandler(userRepo repositories.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req CreateUserRequest
+		fmt.Println("CreateUserHandler")
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-
+		fmt.Println("CreateUserHandler > user")
 		user := &models.User{
 			Email:     req.Email,
 			Username:  req.Username,
@@ -33,12 +35,12 @@ func CreateUserHandler(userRepo repositories.UserRepository) gin.HandlerFunc {
 			Password:  req.Password,
 			Status:    models.UserStatusInactive,
 		}
-
+		fmt.Println("CreateUserHandler > user: ", user)
 		if err := userRepo.CreateUser(context.Background(), user); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
+		fmt.Println("CreateUserHandler > userRepo.CreateUser")
 		// send welcome email (implementation omitted)
 
 		c.JSON(http.StatusCreated, user)
