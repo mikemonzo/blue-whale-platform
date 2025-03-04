@@ -29,6 +29,9 @@ COPY services/idp/.air.toml ./services/idp/.air.toml
 # Download dependencies
 RUN go mod download
 
+# Copy the rest of the application code
+COPY services/idp ./services/idp
+
 # Set working directory to IDP service
 WORKDIR /workspace/services/idp
 

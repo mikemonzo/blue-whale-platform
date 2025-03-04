@@ -1,4 +1,4 @@
-package repository
+package repositories
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 )
 
 type UserRepository interface {
-	Create(ctx context.Context, user *models.User) error
+	CreateUser(ctx context.Context, user *models.User) error
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 	// GetUserByID(ctx context.Context, id string) (*models.User, error)
 	Update(ctx context.Context, user *models.User) error

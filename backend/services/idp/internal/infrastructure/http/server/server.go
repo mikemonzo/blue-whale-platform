@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/internal/domain/repositories"
 	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/internal/infrastructure/http/routes"
 	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/pkg/config"
 
@@ -17,10 +18,10 @@ import (
 )
 
 // Start inicia el servidor HTTP
-func Start(cfg config.Config) error {
+func Start(cfg config.Config, userRepo repositories.UserRepository) error {
 	// Configurar el enrutador HTTP con Gin
 	r := gin.Default()
-	routes.SetupRoutes(r)
+	routes.SetupRoutes(r, userRepo)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),

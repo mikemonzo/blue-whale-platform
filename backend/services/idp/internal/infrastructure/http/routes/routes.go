@@ -1,19 +1,28 @@
 package routes
 
 import (
+	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/internal/domain/repositories"
 	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/internal/infrastructure/http/handlers"
 
 	"github.com/gin-gonic/gin"
 )
 
 // SetupRoutes configura todas las rutas del servicio IdP
-func SetupRoutes(router *gin.Engine) {
-	api := router.Group("/api")
+func SetupRoutes(router *gin.Engine, userRepo repositories.UserRepository) {
+	v1 := router.Group("/api/v1")
 	{
-		api.GET("/health", handlers.HealthCheckHandler)
-		//api.POST("/login", handlers.LoginHandler)
-		//api.POST("/register", handlers.RegisterHandler)
-		//api.POST("/refresh", handlers.RefreshTokenHandler)
-		//api.GET("/userinfo", handlers.UserInfoHandler)
+		v1.GET("/health", handlers.HealthCheckHandler)
+		//v1.POST("/login", handlers.LoginHandler)
+		//v1.POST("/register", handlers.RegisterHandler)
+		//v1.POST("/refresh", handlers.RefreshTokenHandler)
+		//v1.GET("/userinfo", handlers.UserInfoHandler)
+	}
+	user := v1.Group("/user")
+	{
+		user.POST("/create", handlers.CreateUserHandler(userRepo))
+		//user.POST("/update", handlers.UpdateUserHandler)
+		//user.GET("/get", handlers.GetUserHandler)
+		//user.GET("/list", handlers.ListUsersHandler)
+		//user.POST("/delete", handlers.DeleteUserHandler)
 	}
 }
