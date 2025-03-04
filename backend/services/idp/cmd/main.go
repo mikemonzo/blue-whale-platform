@@ -3,9 +3,11 @@ package main
 
 import (
 	"fmt"
-	"idp/internal/infrastructure/http/server"
-	"idp/pkg/config"
 	"log"
+
+	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/pkg/config"
+
+	"github.com/mikemonzo/blue-whale-platform/backend/services/idp/internal/infrastructure/http/server"
 )
 
 func main() {
