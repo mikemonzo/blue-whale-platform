@@ -20,9 +20,10 @@ func SetupRoutes(router *gin.Engine, userRepo repositories.UserRepository) {
 	users := v1.Group("/users")
 	{
 		users.POST("", handlers.CreateUserHandler(userRepo))
-		//users.GET("/:id", handlers.GetUserHandler(userRepo))
-		//user.POST("/update", handlers.UpdateUserHandler)
-		//user.GET("/list", handlers.ListUsersHandler)
-		//user.POST("/delete", handlers.DeleteUserHandler)
+		users.GET("", handlers.ListUsersHandler(userRepo))
+		users.GET("/:id", handlers.GetUserHandler(userRepo))
+		users.GET("/email/:email", handlers.GetUserByEmailHandler(userRepo))
+		users.PUT("/:id", handlers.UpdateUserHandler(userRepo))
+		users.DELETE("/delete", handlers.DeleteUserHandler(userRepo))
 	}
 }

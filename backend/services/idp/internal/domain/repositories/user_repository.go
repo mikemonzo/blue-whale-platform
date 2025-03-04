@@ -8,8 +8,10 @@ import (
 
 type UserRepository interface {
 	RunMigrations(migrationsPath string) error
+	ListUsers(ctx context.Context) ([]*models.User, error)
 	CreateUser(ctx context.Context, user *models.User) error
-	// GetUserByEmail(ctx context.Context, email string) (*models.User, error)
-	// GetUserByID(ctx context.Context, id string) (*models.User, error)
-	// Update(ctx context.Context, user *models.User) error
+	GetUser(ctx context.Context, id string) (*models.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	UpdateUser(ctx context.Context, user *models.User) error
+	DeleteUser(ctx context.Context, user *models.User) error
 }

@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
@@ -41,6 +42,31 @@ func (r *PostgresUserRepository) RunMigrations(migrationsPath string) error {
 	return nil
 }
 
+func (r *PostgresUserRepository) ListUsers(ctx context.Context) ([]*models.User, error) {
+	query := `SELECT id, email, username, first_name, last_name, password, status, created_at, updated_at FROM users`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := make([]*models.User, 0)
+	for rows.Next() {
+		user := &models.User{}
+		if err := rows.Scan(&user.ID, &user.Email, &user.Username, &user.FirstName, &user.LastName, &user.Password, &user.Status, &user.CreatedAt, &user.UpdatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (r *PostgresUserRepository) CreateUser(ctx context.Context, user *models.User) error {
 	query := `INSERT INTO users (id, email, username, first_name, last_name, password, status, created_at, updated_at)
               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
@@ -59,7 +85,21 @@ func (r *PostgresUserRepository) CreateUser(ctx context.Context, user *models.Us
 	return nil
 }
 
-/*
+func (r *PostgresUserRepository) GetUser(ctx context.Context, id string) (*models.User, error) {
+	query := `SELECT id, email, username, first_name, last_name, password, status, created_at, updated_at FROM users WHERE id = $1`
+
+	row := r.db.QueryRowContext(ctx, query, id)
+	user := &models.User{}
+	if err := row.Scan(&user.ID, &user.Email, &user.Username, &user.FirstName, &user.LastName, &user.Password, &user.Status, &user.CreatedAt, &user.UpdatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (r *PostgresUserRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	query := `SELECT id, email, username, first_name, last_name, password, status, created_at, updated_at FROM users WHERE email = $1`
 
@@ -75,7 +115,7 @@ func (r *PostgresUserRepository) GetUserByEmail(ctx context.Context, email strin
 	return user, nil
 }
 
-func (r *PostgresUserRepository) Update(ctx context.Context, user *models.User) error {
+func (r *PostgresUserRepository) UpdateUser(ctx context.Context, user *models.User) error {
 	query := `UPDATE users SET email = $1, username = $2, first_name = $3, last_name = $4, password = $5, status = $6, updated_at = $7 WHERE id = $8`
 
 	_, err := r.db.ExecContext(ctx, query, user.Email, user.Username, user.FirstName, user.LastName, user.Password, user.Status, user.UpdatedAt, user.ID)
@@ -85,4 +125,14 @@ func (r *PostgresUserRepository) Update(ctx context.Context, user *models.User) 
 
 	return nil
 }
-*/
+
+func (r *PostgresUserRepository) DeleteUser(ctx context.Context, user *models.User) error {
+	query := `DELETE FROM users WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, query, user.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
