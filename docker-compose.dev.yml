@@ -2,16 +2,16 @@ services:
   idp:
     build:
       context: ./backend
-      dockerfile: services/idp/Dockerfile.dev
+      dockerfile: services/idp/deployments/Dockerfile.dev
     ports:
-      - "8080:8080"
+      - "9000:9000"
     environment:
       - ENV=development
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=bwadmin
-      - POSTGRES_PASSWORD=bwpassword
-      - POSTGRES_DB=idp_db
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=bwadmin
+      - DB_PASSWORD=bwpassword
+      - DB_NAME=idp_db
     volumes:
       - ./backend:/workspace
       - go-cache:/root/.cache/go-build

@@ -23,12 +23,13 @@ func LoadConfig() Config {
 	viper.AutomaticEnv()
 
 	// Configuración por defecto
-	viper.SetDefault("PORT", 8080)
 	viper.SetDefault("DB_HOST", "localhost")
 	viper.SetDefault("DB_PORT", 5432)
 	viper.SetDefault("DB_USER", "user")
 	viper.SetDefault("DB_PASSWORD", "password")
 	viper.SetDefault("DB_NAME", "idp_db")
+
+	viper.SetDefault("PORT", 9000)
 	viper.SetDefault("JWT_SECRET", "supersecretkey")
 
 	var cfg Config
