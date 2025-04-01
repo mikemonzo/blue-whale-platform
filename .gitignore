@@ -1,0 +1,27 @@
+# .gitignore for VSCode and Go
+
+# VSCode specific files
+.vscode/
+*.code-workspace
+
+# Go specific files
+/bin/
+/pkg/
+/*.exe
+/*.dll
+/*.so
+/*.dylib
+*.test
+*.out
+
+# Dependency directories
+/vendor/
+
+# Build artifacts
+*.log
+*.tmp
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
